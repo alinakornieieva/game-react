@@ -1,17 +1,43 @@
-import { useEffect, useState } from 'react';
-import './App.css';
+import { useEffect, useState, useRef } from 'react';
 import ModeModal from './components/ModeModal';
 import WinnerModal from './components/WinnerModal';
+import axios from 'axios';
+import './App.css';
 
 const App = () => {
   const [current, setCurrent] = useState()
   const [modeModal, setModeModal] = useState(true)
+  const [firstAi, setFirstAi] = useState(false)
   const [userScore, setUserScore] = useState(0)
   const [aiScore, setAiScore] = useState(0)
   const [score, setScore] = useState(25)
+  const didMount = useRef(false);
+  const aiMove = () => {
+    const prompt = `The user has ${aiScore} matches. Should the user take 1, 2 or 3 matches from the pile so that the user has an even amount of matches? Give me only the number.`
+    axios.post("http://localhost:5000/request", { prompt })
+      .then(({ data }) => {
+        const points = +(data.length > 1 ? [...data.match(/[0-9]+/)] : data)
+        setAiScore((prev) => prev + points)
+        setScore((prev) => prev - points)
+        setCurrent('user')
+      })
+      .catch((err) => {
+        console.error(err);
+      })
+  }
+  useEffect(() => {
+    if (didMount.current) {
+      aiMove()
+    } else {
+      didMount.current = true;
+    }
+  }, [firstAi === true]);
   const recieveMode = (mode) => {
     setCurrent(mode)
     setModeModal(false)
+    if (mode === 'ai') {
+      setFirstAi(true)
+    }
   }
   const closeWinnerModal = () => {
     setScore(25)
@@ -20,18 +46,10 @@ const App = () => {
     setModeModal(true)
   }
   const changeMatchesAmount = (e) => {
-    if (current === 'user') {
-      setUserScore((prev) => prev + +e.target.id)
-      setScore((prev) => prev - +e.target.id)
-      setCurrent('ai')
-      return
-    }
-    if (current === 'ai') {
-      setAiScore((prev) => prev + +e.target.id)
-      setScore((prev) => prev - +e.target.id)
-      setCurrent('user')
-      return
-    }
+    setUserScore((prev) => prev + +e.target.id)
+    setScore((prev) => prev - +e.target.id)
+    setCurrent('ai')
+    aiMove()
   }
   if (modeModal) {
     return <ModeModal recieveMode={recieveMode} />
