@@ -1,0 +1,17 @@
+.modeModal {
+  display: flex;
+  height: 100vh;
+  align-items: center;
+  justify-content: center;
+}
+
+.modeBorder {
+  border: 1px solid rgb(139, 172, 221);
+  border-radius: 4px;
+  padding: 40px;
+}
+
+.strip {
+  height: 0px;
+  border-bottom: solid 2px rgb(139, 172, 221);
+}
